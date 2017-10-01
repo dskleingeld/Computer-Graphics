@@ -40,9 +40,7 @@ float g = 0.0;
 float G = -6.67408; //NON PHYSICAL MISSES AN e-11 (but lets have pitty on the pc)
 
 bool wellOn = false;
-bool diffuseOn = true;
-bool ambientOn = true;
-bool materialsOn = true;
+bool fired = true;
 
 void updateCamera();
 void drawObjects();
@@ -71,13 +69,13 @@ void fireCannon()
 {
 	unsigned int i;
 	for (i = 0; i < MAXPARTICLES; i = i + 1){
-		particles[i].width = 3.0 * (rand() / (float)RAND_MAX) + 1.0;
+		particles[i].width = 2* ((rand() / (float)RAND_MAX) + 1.0)*0.5;
 		particles[i].x = 0.0;
 		particles[i].y = 0.0;
 		particles[i].z = 0.0;
-		particles[i].v_x = 5.0 * (rand() / (float)RAND_MAX) - 2.5;
-		particles[i].v_y = 15.0 * (rand() / (float)RAND_MAX) + 10.0; // always upwards
-		particles[i].v_z = 5.0 * (rand() / (float)RAND_MAX) - 2.5;
+		particles[i].v_x = 1.0 * ((rand() / (float)RAND_MAX) - 0.5);
+		particles[i].v_y = 3.0 * ((rand() / (float)RAND_MAX) + 1.0); // always upwards
+		particles[i].v_z = 1.0 * ((rand() / (float)RAND_MAX) - 0.5);
 
 		particles[i].setParticleColor(1.0 * (rand() / (float)RAND_MAX),  //r
 		                              1.0 * (rand() / (float)RAND_MAX),  //g
@@ -116,53 +114,27 @@ void fireworks()
 
 
 void drawOneParticle(unsigned int i){
+	//set material properties (needs to be done before drawing)
+
+	glMaterialfv(GL_FRONT, GL_AMBIENT, particles[i].ambient);
+	glMaterialfv(GL_FRONT, GL_DIFFUSE, particles[i].diffuse);
+
 	//draw a sphere (radius, number of subdivisions around the Z axis, 
 	//number of subdivisions along the Z axis)
 	glutSolidSphere(particles[i].width ,60,60); 
-
-	if(materialsOn){
-	   glMaterialfv(GL_FRONT, GL_AMBIENT, particles[i].ambient);
-     glMaterialfv(GL_FRONT, GL_DIFFUSE, particles[i].diffuse);
-     glMaterialfv(GL_FRONT, GL_SPECULAR, mat_specular);
-     glMaterialfv(GL_FRONT, GL_SHININESS, high_shininess);
-     glMaterialfv(GL_FRONT, GL_EMISSION, no_mat);
-	}
-	else{
-     glMaterialfv(GL_FRONT, GL_AMBIENT, default_ambient);
-     glMaterialfv(GL_FRONT, GL_DIFFUSE, default_diffuse);
-     glMaterialfv(GL_FRONT, GL_SPECULAR, no_mat);
-     glMaterialfv(GL_FRONT, GL_SHININESS, no_shininess);
-     glMaterialfv(GL_FRONT, GL_EMISSION, no_mat);
-	}
-}
-
-
-void drawWell(){
-
-	glScalef(3, 3, 3);
-	glColor3f(1, 1, 1);
-	glBegin(GL_TRIANGLE_STRIP);
-	// triangle 1
-	glVertex3f(-0.5, 0.0, 0.5); // A
-	glVertex3f(0.0, 0.0, -0.5); // B
-	glVertex3f(0.0, 1.0, 0.0); // top
-	// triangle 2
-	glVertex3f(0.5, 0.0, 0.5); // C
-	// triangle 3
-	glVertex3f(-0.5, 0.0, 0.5); // A again
-	// triangle 4 (bottom)
-	glVertex3f(0.0, 0.0, -0.5); // B again
-	glEnd();
-
 }
 
 void drawParticles()
-{
-	//indicate gravity well with single particle
-	if(wellOn){
-		glPushMatrix();
-		glTranslatef(0, 50, 0);
-		glPopMatrix();
+{	
+	if(materialsOn){
+		 glMaterialfv(GL_FRONT, GL_SPECULAR, mat_specular);
+		 glMaterialfv(GL_FRONT, GL_SHININESS, high_shininess);
+		 glMaterialfv(GL_FRONT, GL_EMISSION, no_mat);
+	}
+	else{
+   glMaterialfv(GL_FRONT, GL_SPECULAR, no_mat);
+   glMaterialfv(GL_FRONT, GL_SHININESS, no_shininess);
+   glMaterialfv(GL_FRONT, GL_EMISSION, no_mat);
 	}
 
 	unsigned int i;
@@ -172,6 +144,10 @@ void drawParticles()
 		drawOneParticle(i);
 		glPopMatrix();
 	}
+
+	//restore default colors
+	glMaterialfv(GL_FRONT, GL_AMBIENT, default_ambient);
+	glMaterialfv(GL_FRONT, GL_DIFFUSE, default_diffuse);
 }
 
 void keyboard(unsigned char key, int x, int y){
@@ -243,18 +219,38 @@ void keyboard(unsigned char key, int x, int y){
 			exit(0);
 			break;
 		case 'd':
-			if(diffuseOn){diffuseOn = false; glDisable(GL_LIGHT0);}
-			else{diffuseOn = true; glEnable(GL_LIGHT0);}
+			if(diffuseOn){
+				printf("disabled diffuse lighting\n");
+				diffuseOn = false; 
+				glDisable(GL_LIGHT0);
+			}
+			else{
+				printf("enabled diffuse lighting\n");				
+				diffuseOn = true; 
+				glEnable(GL_LIGHT0);
+			}
 			break;
 		case 'a':
-			if(ambientOn){ambientOn = false; glDisable(GL_LIGHT1);}
-			else{ambientOn = true; glEnable(GL_LIGHT1);}
+			if(ambientOn){
+				printf("disabling ambient lighting\n");						
+				ambientOn = false; 
+				glDisable(GL_LIGHT1);
+			}
+			else{
+				printf("enabling ambient lighting\n");				
+				ambientOn = true; 
+				glEnable(GL_LIGHT1);
+			}
 			break;
 		case 'm':
-			if(materialsOn)
+			if(materialsOn){
+				printf("disabling material lighting\n");					
 				materialsOn = false;
-			else
+			}
+			else{
+				printf("enabling material lighting\n");					
 				materialsOn = true;
+			}
 			break;
 	}
 	glutPostRedisplay();
@@ -265,16 +261,11 @@ void update(){
   glClear (GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT); //clear the color buffer and the depth buffer
   glLoadIdentity(); //replaces the current matrix with the identity matrix
 
-	//update lighting
-	GLfloat DiffuseLight[] = {dlr, dlg, dlb}; //set DiffuseLight[] to the specified values
-	GLfloat AmbientLight[] = {alr, alg, alb}; //set AmbientLight[] to the specified values
-	glLightfv (GL_LIGHT0, GL_DIFFUSE, DiffuseLight); //change the light accordingly
-	glLightfv (GL_LIGHT1, GL_AMBIENT, AmbientLight); //change the light accordingly
-
-	GLfloat LightPosition[] = {lx, ly, lz, lw}; //set the LightPosition to the specified values
-	glLightfv (GL_LIGHT0, GL_POSITION, LightPosition); //change the light accordingly
-
 	updateCamera();
+
+	//update lighting
+	updateLights();
+
 	drawObjects(); //call the object drawing function
 	glutSwapBuffers(); //swap the buffers
 }
@@ -285,24 +276,15 @@ void updateCamera(){
 }
 
 void drawObjects(){
-	glColor3f(1.0, 1.0, 1.0);
-	// cannon base
-	glBegin(GL_QUADS);
-	glVertex3f(-5.0, 0.0, -5.0);
-	glVertex3f(-5.0, 0.0, 5.0);
-	glVertex3f(5.0, 0.0, 5.0);
-	glVertex3f(5.0, 0.0, -5.0);
-	glEnd();
-	// ground plane
-	glBegin(GL_LINE_STRIP);
-	glVertex3f(-40.0, 0.0, -40.0);
-	glVertex3f(-40.0, 0.0, 40.0);
-	glVertex3f(40.0, 0.0, 40.0);
-	glVertex3f(40.0, 0.0, -40.0);
-	glVertex3f(-40.0, 0.0, -40.0);
-	glEnd();
-
-	drawParticles();
+	drawGroundPlane();
+	drawLightSource();
+	//drawTestParticle();
+	//drawWindMill();
+	
+	if(wellOn) //indicate gravity well with single particle
+		drawWell();
+	if(fired)
+		drawParticles();
 }
 
 void gravity(float time){
@@ -375,7 +357,6 @@ void timer(int value){
 			particles[i].z += particles[i].v_z*time;
 		}
 	}
-
 	glutPostRedisplay();
 	glutTimerFunc(50, &timer, 0);
 }

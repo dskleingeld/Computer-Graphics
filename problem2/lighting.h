@@ -12,6 +12,10 @@
 #include <math.h>
 #include <time.h>
 
+bool materialsOn = true;
+bool diffuseOn = true;
+bool ambientOn = true;
+
 //angle of rotation
 GLfloat angle = 0.0;
 
@@ -27,9 +31,9 @@ GLfloat alb = 1.0;
 
 //light position variables
 GLfloat lx = 0.0; // normal physics y axis
-GLfloat ly = 0.0; // up (normal physics z axis)
+GLfloat ly = 15.0; // up (normal physics z axis)
 GLfloat lz = 1.0; // normal physics x axis
-GLfloat lw = 0.0; //
+GLfloat lw = 1.0; // normal physics x axis
 
 //interface lighting flags
 int aflag = 0;
@@ -57,4 +61,130 @@ void initLighting(){
   glEnable(GL_LIGHT0); //enable LIGHT0, our Diffuse Light
   glEnable(GL_LIGHT1); //enable LIGHT1, our Ambient Light
   glShadeModel(GL_SMOOTH); //set the shader to smooth shader
+}
+
+void updateLights(){
+	//update lighting
+	GLfloat DiffuseLight[] = {dlr, dlg, dlb}; //set DiffuseLight[] to the specified values
+	GLfloat AmbientLight[] = {alr, alg, alb}; //set AmbientLight[] to the specified values
+	glLightfv(GL_LIGHT0, GL_DIFFUSE, DiffuseLight); //change the light accordingly
+	glLightfv(GL_LIGHT1, GL_AMBIENT, AmbientLight); //change the light accordingly
+
+	//set the LightPosition, if last element is 1: base, diffuse and specular 
+	//lighting calculations on the actual location of the light in eye coordinates,
+
+	GLfloat LightPosition[] = {lx, ly, lz, lw}; 
+	glLightfv(GL_LIGHT0, GL_POSITION, LightPosition); //change the light accordingly
+
+}
+
+void drawWell(){
+	glPushMatrix();
+	glTranslatef(0, 50, 0);
+	glScalef(3, 3, 3);
+	glColor3f(1, 1, 1);
+	glBegin(GL_TRIANGLE_STRIP);
+	// triangle 1
+	glVertex3f(-0.5, 0.0, 0.5); // A
+	glVertex3f(0.0, 0.0, -0.5); // B
+	glVertex3f(0.0, 1.0, 0.0); // top
+	// triangle 2
+	glVertex3f(0.5, 0.0, 0.5); // C
+	// triangle 3
+	glVertex3f(-0.5, 0.0, 0.5); // A again
+	// triangle 4 (bottom)
+	glVertex3f(0.0, 0.0, -0.5); // B again
+	glEnd();
+	glPopMatrix();
+}
+
+void drawGroundPlane(){
+
+	glPushMatrix(); //start new translation and rotation session
+	
+	glBegin(GL_QUADS);// cannon base
+
+	glVertex3f(-5.0, 0.0, -5.0);
+	glVertex3f(-5.0, 0.0, 5.0);
+	glVertex3f(5.0, 0.0, 5.0);
+	glVertex3f(5.0, 0.0, -5.0);
+	glEnd();//draw the objects
+
+	glBegin(GL_LINE_STRIP);// ground plane
+	glVertex3f(-40.0, 0.0, -40.0);
+	glVertex3f(-40.0, 0.0, 40.0);
+	glVertex3f(40.0, 0.0, 40.0);
+	glVertex3f(40.0, 0.0, -40.0);
+	glVertex3f(-40.0, 0.0, -40.0);
+	glEnd();//draw the objects
+
+	glPopMatrix(); 
+
+}
+
+void drawLightSource(){
+	glPushMatrix(); //start new translation and rotation session
+
+	GLfloat ambient[4] = {1,1,1,1};
+	GLfloat diffuse[4] = {0,0,0,0};
+	glMaterialfv(GL_FRONT, GL_AMBIENT, ambient);
+	glMaterialfv(GL_FRONT, GL_DIFFUSE, diffuse);
+
+	glTranslatef(lx, ly, lz);
+	glScalef(3, 3, 3);
+	glColor3f(1, 1, 1);
+	glBegin(GL_TRIANGLE_STRIP);
+	// triangle 1
+	glVertex3f(-0.5, 0.0, 0.5); // A
+	glVertex3f(0.0, 0.0, -0.5); // B
+	glVertex3f(0.0, 1.0, 0.0); // top
+	// triangle 2
+	glVertex3f(0.5, 0.0, 0.5); // C
+	// triangle 3
+	glVertex3f(-0.5, 0.0, 0.5); // A again
+	// triangle 4 (bottom)
+	glVertex3f(0.0, 0.0, -0.5); // B again
+	glEnd();
+	glPopMatrix(); 
+
+	//restore default colors
+	glMaterialfv(GL_FRONT, GL_AMBIENT, default_ambient);
+	glMaterialfv(GL_FRONT, GL_DIFFUSE, default_diffuse);
+}
+
+void drawTestParticle(){
+	glPushMatrix(); //start new translation and rotation session
+
+/*	GLfloat ambient[4] = {1,1,1,1};*/
+/*	GLfloat diffuse[4] = {0,0,0,0};*/
+/*	glMaterialfv(GL_FRONT, GL_AMBIENT, ambient);*/
+/*	glMaterialfv(GL_FRONT, GL_DIFFUSE, diffuse);*/
+
+	glTranslatef(0, 10, 0);
+	glutSolidSphere(1,60,60); 
+	glPopMatrix(); 
+
+/*	//restore default colors*/
+/*	glMaterialfv(GL_FRONT, GL_AMBIENT, default_ambient);*/
+/*	glMaterialfv(GL_FRONT, GL_DIFFUSE, default_diffuse);*/
+}
+
+void drawWindMill(){
+	glPushMatrix(); //start new translation and rotation session
+	glScalef(3, 3, 3);
+	glColor3f(1, 1, 1);
+	glBegin(GL_TRIANGLE_STRIP);
+	// triangle 1
+	glVertex3f(-0.5, 0.0, 0.5); // A
+	glVertex3f(0.0, 0.0, -0.5); // B
+	glVertex3f(0.0, 1.0, 0.0); // top
+	// triangle 2
+	glVertex3f(0.5, 0.0, 0.5); // C
+	// triangle 3
+	glVertex3f(-0.5, 0.0, 0.5); // A again
+	// triangle 4 (bottom)
+	glVertex3f(0.0, 0.0, -0.5); // B again
+	glEnd();
+
+	glPopMatrix(); 
 }
