@@ -16,6 +16,13 @@ bool materialsOn = true;
 bool diffuseOn = true;
 bool ambientOn = true;
 
+//windmill paramaters
+constexpr float mill_length = 10, mill_with = 4, mill_thickness = 1;
+constexpr float mill_baseWith = 5, mill_baseHeight=20;	
+constexpr float mill_axelGap = 0.1;
+constexpr float mill_xOffset = 5, mill_yOffset = 0, mill_zOffset = 0;
+
+
 //angle of rotation
 GLfloat angle = 0.0;
 
@@ -191,8 +198,8 @@ void setNormalVec(GLfloat p3[3], GLfloat p2[3], GLfloat p1[3]) {
   crossProduct(vect1, vect2, normalVec);
   len = sqrt(pow(normalVec[0], 2) + pow(normalVec[1], 2) + pow(normalVec[2], 2));
 
-  normalVec[0] /= len;
-  normalVec[1] /= len;
+  normalVec[0] /= -len;
+  normalVec[1] /= -len;
   normalVec[2] /= len;
   
   glNormal3fv(normalVec);
@@ -289,12 +296,111 @@ void drawWindMillBlades(float length, float with, float thickness){
 	glPopMatrix(); 
 }
 
-void drawWindMill(){
-	constexpr float length = 10, with = 4, thickness = 1;
-	constexpr float baseWith = 5, baseHeight=20;	
+void drawWindMill(float angle){
 	glPushMatrix();
-	drawWindMillBase(baseWith, baseHeight);
-	glTranslatef(0,baseHeight, baseWith/2);
-	drawWindMillBlades(length, with, thickness);
+	drawWindMillBase(mill_baseWith, mill_baseHeight);
+	glTranslatef(0,mill_baseHeight, mill_baseWith/2+mill_thickness/2+mill_axelGap);
+	glRotatef(angle, 0, 0, 1);
+	drawWindMillBlades(mill_length, mill_with, mill_thickness);
 	glPopMatrix(); 
 }
+
+bool in2dBoundingBox(float x, float y, float r){
+	//check using big box around blades if part of sphere could be inside 
+	constexpr float xmin = -mill_length, 
+	                xmax = +mill_length, 
+	                ymin = -mill_length,
+	                ymax = +mill_length;
+
+	//printf("xmin: %f, xmax: %f\n", xmin, xmax);
+	//printf("ymin: %f, ymax: %f\n", ymin, ymax);
+	
+	if(x+r > xmin && x-r < xmax &&
+	   y+r > ymin && y-r < ymax)
+		return true;
+	else{
+		printf("not yet\n");
+		return false;
+	}
+}
+
+//check if part of sphere in squar grid alignd box that is the windmill base
+bool inWindmillBase(float x, float y, float z, float r){
+	constexpr float xmin = mill_xOffset-mill_baseWith/2, 
+	                xmax = mill_xOffset+mill_baseWith/2, 
+	                ymin = mill_yOffset-mill_baseHeight/2, 
+									ymax = mill_yOffset+mill_baseHeight/2,
+                  zmin = mill_zOffset-mill_baseWith/2,
+                  zmax = mill_zOffset+mill_baseWith/2;
+
+	if(x+r > xmin && x-r < xmax &&
+	   y+r > ymin && y-r < ymax &&
+		 z+r > zmin && z-r < zmax)
+		return true;
+	else
+		return false;
+}
+
+bool colliding_checkUsingRotation(float x, float y, float z, float r, float angle){
+	//z conditions for the blades	
+	constexpr float zmax = mill_zOffset+mill_baseWith/2+mill_axelGap+mill_thickness, 
+	                zmin = mill_zOffset+mill_baseWith/2+mill_axelGap;
+ 	//conditions for horizontal blade
+	constexpr float xmax1 = mill_length, 
+	                xmin1 = -mill_length,
+                  ymax1 = mill_with/2, 
+	                ymin1 = -mill_with/2;
+	//conditions for vertical blade
+	constexpr float xmax2 = ymax1,
+	                xmin2 = ymin1,
+                  ymax2 = xmax1,
+	                ymin2 = ymin1;
+
+	//check if in base (easy)
+	if(inWindmillBase(x, y, z, r)){
+		//printf("inWindmillBase\n");		
+		return false; //TODO RE_ENABLE WINDMILL BASE COLLISION
+	}
+	else
+		//check if in right z layer for windmill blades
+		//if(z+r > zmin && z-r < zmax){//TODO re-enable z testing
+		if(true){
+			//printf("zmin: %f, zmax: %f\n", zmin, zmax);
+			//transpose to center of blades at origin
+			x -= mill_xOffset+mill_baseWith/2;
+			y -= mill_yOffset+mill_baseHeight;
+			if(in2dBoundingBox(x,y,r)){
+				printf("x: %f, y: %f\n", x, y);
+				//rotate to frame of reference where blades are not moving
+				float rx = x*cos(angle / 180.0 * M_PI) - y*sin(angle / 180.0 * M_PI);
+				float ry = x*sin(angle / 180.0 * M_PI) + y*cos(angle / 180.0 * M_PI);
+				
+				//printf("rx: %f, ry: %f\n", rx, ry);
+				//printf("xmin1: %f, xmax1: %f, ymin: %f, ymax %f\n", xmin1, xmax1, ymin1, ymax1);
+				//check if in one of the blades
+				if((rx+r > xmin1 && rx-r < xmax1 &&
+						ry+r > ymin1 && ry-r < ymax1)||
+					 (rx+r > xmin2 && rx-r < xmax2 &&
+						ry+r > ymin2 && ry-r < ymax2) ){
+					//printf("hit a windmill moving part\n");					
+					return true;
+				}
+			}
+		}
+	return false;
+}
+
+/*void 2d_triangleAreaCheck(float P[2], float A[2], float B[2], float C[2]){*/
+/*	//float sum = 0.5*P*/
+/*	//calc sum of 4 triangles connecting the points of the rectangle and the*/
+/*	//point. If that surface is <= to that of the rectangle, return true.*/
+/*}*/
+
+/*void checkCollision_2(currentP){*/
+/*	//check if particle in base*/
+
+/*	//check if in right z layer for windmill blades*/
+/*	//rotate particle to blade frame of reference*/
+/*	//check if in blade*/
+/*	//return result*/
+/*}*/
