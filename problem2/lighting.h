@@ -238,24 +238,29 @@ void drawBox(float dx, float dy, float dz){
 
 		modified for cubes with variable vertices
 	*/
+	GLfloat vertex[14][3] = 
+		{{-dx, dy, dz},  //4 front top left
+		{dx, dy, dz},  //3 front top right
+		{-dx, -dy, dz},  //7 front bottom left
+		{dx, -dy, dz},  //8 front bottom right
+		{dx, -dy, -dz},  //5 back bottom right
+		{dx, dy, dz},  //3 front top right
+		{dx, dy, -dz},  //1 back top right
+		{-dx, dy, dz},  //4 front top left
+		{-dx, dy, -dz},  //2 back top left
+		{-dx, -dy, dz},  //7 front bottom left
+		{-dx, -dy, -dz},  //6 back bottom left
+		{dx, -dy, -dz},  //5 back bottom right
+		{-dx, dy, -dz},  //2 back top left
+		{dx, dy, -dz}};  //1 back top right
+
 	glBegin(GL_TRIANGLE_STRIP);
 
-  glVertex3f(-dx, dy, dz);  //4 front top left
-  glVertex3f(dx, dy, dz);  //3 front top right
-  glVertex3f(-dx, -dy, dz);  //7 front bottom left
-  glVertex3f(dx, -dy, dz);  //8 front bottom right
-  glVertex3f(dx, -dy, -dz);  //5 back bottom right
-  glVertex3f(dx, dy, dz);  //3 front top right
-  glVertex3f(dx, dy, -dz);  //1 back top right
-  glVertex3f(-dx, dy, dz);  //4 front top left
-  glVertex3f(-dx, dy, -dz);  //2 back top left
-  glVertex3f(-dx, -dy, dz);  //7 front bottom left
-  glVertex3f(-dx, -dy, -dz);  //6 back bottom left
-  glVertex3f(dx, -dy, -dz);  //5 back bottom right
-  glVertex3f(-dx, dy, -dz);  //2 back top left
-  glVertex3f(dx, dy, -dz);  //1 back top right
-
-	glEnd();
+	for(int i=2; i<14; i++){
+		setNormalVec(vertex[i], vertex[i-1], vertex[i-2]);
+		glVertex3fv(vertex[i]);
+	}
+	glEnd();		
 }
 
 void drawWindMillBase(float baseWith, float baseHeight){
