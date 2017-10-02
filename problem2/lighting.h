@@ -119,7 +119,6 @@ void drawGroundPlane(){
 	glEnd();//draw the objects
 
 	glPopMatrix(); 
-
 }
 
 void drawLightSource(){
@@ -169,22 +168,128 @@ void drawTestParticle(){
 /*	glMaterialfv(GL_FRONT, GL_DIFFUSE, default_diffuse);*/
 }
 
-void drawWindMill(){
-	glPushMatrix(); //start new translation and rotation session
-	glScalef(3, 3, 3);
-	glColor3f(1, 1, 1);
-	glBegin(GL_TRIANGLE_STRIP);
-	// triangle 1
-	glVertex3f(-0.5, 0.0, 0.5); // A
-	glVertex3f(0.0, 0.0, -0.5); // B
-	glVertex3f(0.0, 1.0, 0.0); // top
-	// triangle 2
-	glVertex3f(0.5, 0.0, 0.5); // C
-	// triangle 3
-	glVertex3f(-0.5, 0.0, 0.5); // A again
-	// triangle 4 (bottom)
-	glVertex3f(0.0, 0.0, -0.5); // B again
-	glEnd();
+void crossProduct(GLfloat vec1[3], GLfloat vec2[3], GLfloat result[3]) {
+  result[0] = vec1[1] * vec2[2] - vec1[2] * vec2[1];
+  result[1] = vec1[2] * vec2[0] - vec1[0] * vec2[2];
+  result[2] = vec1[0] * vec2[1] - vec1[1] * vec2[0];
+}
 
+void setNormalVec(GLfloat p3[3], GLfloat p2[3], GLfloat p1[3]) {
+  GLfloat vect1[3], vect2[3], normalVec[3];
+	float len;
+  
+	//calc X vec along vertice
+  vect1[0] = p1[0] - p2[0];
+  vect2[0] = p2[0] - p3[0];
+
+  vect1[1] = p1[1] - p2[1];
+  vect2[1] = p2[1] - p3[1];
+
+  vect1[2] = p1[2] - p2[2];
+  vect2[2] = p2[2] - p3[2];
+  
+  crossProduct(vect1, vect2, normalVec);
+  len = sqrt(pow(normalVec[0], 2) + pow(normalVec[1], 2) + pow(normalVec[2], 2));
+
+  normalVec[0] /= len;
+  normalVec[1] /= len;
+  normalVec[2] /= len;
+  
+  glNormal3fv(normalVec);
+}
+
+void drawBox_WithoutFloor(float dx, float dy, float dz){
+	GLfloat vertex[10][3] = 
+			{{-dx, -dy, dz}, //1 front bottem left
+			{-dx, dy, dz},		//2 front top left
+	    {dx, -dy, dz}, //3 front bottem right
+			// triangle 2
+	    {dx, dy, dz}, //4 front top right
+			// triangle 3
+	    {dx, -dy, -dz}, //5 back bottem right
+			// triangle 4
+	    {dx, dy, -dz}, //6 back top right
+			// triangle 5
+	    {-dx, -dy, -dz}, //7 back bottem left
+			// triangle 6
+	    {-dx, dy, -dz}, //8 back top left
+			// triangle 6
+	    {-dx, -dy, dz}, //9 front bottem left
+			// triangle 6
+	    {-dx, dy, dz}}; //9 front top left
+
+
+	glBegin(GL_TRIANGLE_STRIP);
+
+	glVertex3fv(vertex[0]);
+	glVertex3fv(vertex[1]);
+	for(int i=2; i<10; i++){
+		setNormalVec(vertex[i], vertex[i-1], vertex[i-2]);
+		glVertex3fv(vertex[i]);
+	}
+	glEnd();
+}
+
+
+void drawBox(float dx, float dy, float dz){
+	/*using the cube strip from "Optimising Tringle Strips for Fast Rendering"
+	  by Francine Evans, Steven Skiena and Amitabh Varshney. 
+	  State University of New York Oktober 1996
+
+		modified for cubes with variable vertices
+	*/
+	glBegin(GL_TRIANGLE_STRIP);
+
+  glVertex3f(-dx, dy, dz);  //4 front top left
+  glVertex3f(dx, dy, dz);  //3 front top right
+  glVertex3f(-dx, -dy, dz);  //7 front bottom left
+  glVertex3f(dx, -dy, dz);  //8 front bottom right
+  glVertex3f(dx, -dy, -dz);  //5 back bottom right
+  glVertex3f(dx, dy, dz);  //3 front top right
+  glVertex3f(dx, dy, -dz);  //1 back top right
+  glVertex3f(-dx, dy, dz);  //4 front top left
+  glVertex3f(-dx, dy, -dz);  //2 back top left
+  glVertex3f(-dx, -dy, dz);  //7 front bottom left
+  glVertex3f(-dx, -dy, -dz);  //6 back bottom left
+  glVertex3f(dx, -dy, -dz);  //5 back bottom right
+  glVertex3f(-dx, dy, -dz);  //2 back top left
+  glVertex3f(dx, dy, -dz);  //1 back top right
+
+	glEnd();
+}
+
+void drawWindMillBase(float baseWith, float baseHeight){
+	glPushMatrix(); //start new translation and rotation session
+	glTranslatef(0, baseHeight/2, 0);	
+	drawBox_WithoutFloor(baseWith/2, baseHeight/2, baseWith/2);
+	glPopMatrix(); 
+}
+
+void drawWindMillBlades(float length, float with, float thickness){
+	glPushMatrix(); //start new translation and rotation session
+
+	//draw top blade
+	glTranslatef(0, length/2+with/2, 0); 
+	drawBox(with/2,length/2,thickness/2);
+	//draw bottem blade
+	glTranslatef(0, -1*length-with, 0); //= -length/2 -with/2 relative to origin
+	drawBox(with/2,length/2,thickness/2);
+
+	//draw right blade
+	glTranslatef(length/2+with/2, +length/2+with/2, 0);
+	drawBox(length/2,with/2,thickness/2); 
+	//draw right blade
+	glTranslatef(-length-with, 0, 0); 
+	drawBox(length/2,with/2,thickness/2); 
+	glPopMatrix(); 
+}
+
+void drawWindMill(){
+	constexpr float length = 10, with = 4, thickness = 1;
+	constexpr float baseWith = 5, baseHeight=20;	
+	glPushMatrix();
+	drawWindMillBase(baseWith, baseHeight);
+	glTranslatef(0,baseHeight, baseWith/2);
+	drawWindMillBlades(length, with, thickness);
 	glPopMatrix(); 
 }

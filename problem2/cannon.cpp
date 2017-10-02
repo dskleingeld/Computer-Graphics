@@ -278,8 +278,12 @@ void updateCamera(){
 void drawObjects(){
 	drawGroundPlane();
 	drawLightSource();
-	//drawTestParticle();
-	//drawWindMill();
+	
+//drawTestParticle();
+	glPushMatrix();
+	glTranslatef(15,0,-5);
+	drawWindMill();
+	glPopMatrix(); 
 	
 	if(wellOn) //indicate gravity well with single particle
 		drawWell();
