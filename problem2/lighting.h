@@ -20,7 +20,7 @@ bool ambientOn = true;
 constexpr float mill_length = 10, mill_with = 4, mill_thickness = 1;
 constexpr float mill_baseWith = 5, mill_baseHeight=20;	
 constexpr float mill_axelGap = 0.1;
-constexpr float mill_xOffset = 0, mill_yOffset = 0, mill_zOffset = 0;
+constexpr float mill_xOffset = 10, mill_yOffset = 0, mill_zOffset = -4;
 
 
 //angle of rotation
@@ -298,7 +298,7 @@ void drawWindMillBlades(float length, float with, float thickness){
 
 void drawWindMill(float angle){
 	glPushMatrix();
-	//drawWindMillBase(mill_baseWith, mill_baseHeight);
+	drawWindMillBase(mill_baseWith, mill_baseHeight);
 	glTranslatef(0,mill_baseHeight, mill_baseWith/2+mill_thickness/2+mill_axelGap);
 	glRotatef(angle, 0, 0, 1);
 	drawWindMillBlades(mill_length, mill_with, mill_thickness);
@@ -311,9 +311,6 @@ bool in2dBoundingBox(float x, float y, float r){
 	                xmax = +mill_length+mill_with/2, 
 	                ymin = xmin,
 	                ymax = xmax;
-
-	//printf("xmin: %f, xmax: %f\n", xmin, xmax);
-	//printf("ymin: %f, ymax: %f\n", ymin, ymax);
 	
 	if(x+r > xmin && x-r < xmax &&
 	   y+r > ymin && y-r < ymax){
@@ -356,16 +353,13 @@ bool colliding_checkUsingRotation(float x, float y, float z, float r, float angl
                   ymax2 = xmax1,
 	                ymin2 = xmin1;
 
-/*	//check if in base (easy)*/
-/*	if(inWindmillBase(x, y, z, r)){*/
-/*		//printf("inWindmillBase\n");		*/
-/*		return true; //TODO RE_ENABLE WINDMILL BASE COLLISION*/
-/*	}*/
-/*	else*/
+	//check if in base (easy)
+	if(inWindmillBase(x, y, z, r)){	
+		return true; 
+	}
+	else
 		//check if in right z layer for windmill blades
-		if(z+r > zmin && z-r < zmax){//TODO re-enable z testing
-		//if(true){
-			//printf("zmin: %f, zmax: %f\n", zmin, zmax);
+		if(z+r > zmin && z-r < zmax){
 			//transpose to center of blades at origin
 			x -= (mill_xOffset);//+mill_baseWith/2);
 			y -= (mill_yOffset+mill_baseHeight);//+mill_baseWith/2);
@@ -373,17 +367,13 @@ bool colliding_checkUsingRotation(float x, float y, float z, float r, float angl
 				//rotate to frame of reference where blades are not moving
 				float rx = x*cos(-angle / 180.0 * M_PI) - y*sin(-angle / 180.0 * M_PI);
 				float ry = x*sin(-angle / 180.0 * M_PI) + y*cos(-angle / 180.0 * M_PI);
-				
-				//printf("rx: %f, ry: %f\n", rx, ry);
-				//printf("xmin1: %f, xmax1: %f, ymin: %f, ymax %f\n", xmin1, xmax1, ymin1, ymax1);
+
 				//check if in one of the blades
 				if((rx+r > xmin1 && rx-r < xmax1 &&
 						ry+r > ymin1 && ry-r < ymax1)
 				    ||
 					 (rx+r > xmin2 && rx-r < xmax2 &&
 						ry+r > ymin2 && ry-r < ymax2) ){
-					//printf("hit a windmill moving part\n");					
-					printf("x: %f, y: %f\n", x, y);
 					return true;
 				}
 			}

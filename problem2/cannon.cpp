@@ -33,7 +33,7 @@
 
 #include "lighting.h"
 
-#define MAXPARTICLES 100
+#define MAXPARTICLES 1000
 constexpr int WELLMASS = 100;
 constexpr float G = -6.67408; //NON PHYSICAL MISSES AN e-11 (but lets have pitty on the pc)
 
@@ -74,7 +74,7 @@ int drawnParticles = 0;
 void fireCannon()
 {
 	unsigned int i;
-	for (i = 0; i < MAXPARTICLES/10; i = i + 1){
+	for (i = 0; i < 30; i = i + 1){
 		//particles[i].width = 2* ((rand() / (float)RAND_MAX) + 1.0)*0.5; //TODO re-enable
 		particles[i].width = 2;
 		particles[i].x = 0.0;
@@ -92,8 +92,11 @@ void fireCannon()
 		particles[i].a_y = 0;
 		particles[i].a_z = 0;
 		particles[i].intact = true;
-		drawnParticles++;
+
 	}
+	drawnParticles = 30;
+	for (i = 30; i < MAXPARTICLES; i = i + 1)
+		particles[i].intact = false;	
 	glutGet(GLUT_ELAPSED_TIME);
 	fired = true;
 }
@@ -105,7 +108,7 @@ void fireworks()
 	float r = 1.0 * (rand() / (float)RAND_MAX);
 	float g = 1.0 * (rand() / (float)RAND_MAX);
 	float b = 1.0 * (rand() / (float)RAND_MAX);
-	for (i = 0; i < MAXPARTICLES; i = i + 1){
+	for (i = 0; i < 30; i = i + 1){
 		particles[i].width =  0.5* (rand() / (float)RAND_MAX);
 		particles[i].x = 0.0;
 		particles[i].y = startAlt;
@@ -357,19 +360,16 @@ void gravity(float time, int currentP){
 }
 
 void explode(float time, int explodingP){
-	constexpr float speed = 5;
+	constexpr float speed = 10;
 
 	if(drawnParticles+4 < MAXPARTICLES){
 		drawnParticles+=4;
 		for(int i = 0; i < 4; i++){
 			particles[i].width = particles[explodingP].width/4;
 
-			particles[i].v_x = speed*(-particles[explodingP].v_x 
-			                   + particles[explodingP].v_x * ((rand() / (float)RAND_MAX)));
-			particles[i].v_y = speed*(-particles[explodingP].v_y 
-			                   + particles[explodingP].v_y * ((rand() / (float)RAND_MAX))); 
-			particles[i].v_z = speed*(-particles[explodingP].v_z 
-			                   + particles[explodingP].v_z * ((rand() / (float)RAND_MAX)));
+			particles[i].v_x = speed *((rand() / (float)RAND_MAX));
+			particles[i].v_y = speed *((rand() / (float)RAND_MAX));
+			particles[i].v_z = speed *((rand() / (float)RAND_MAX));
 
 			particles[i].x = particles[explodingP].x + particles[i].v_x*time;
 			particles[i].y = particles[explodingP].y + particles[i].v_y*time;
@@ -387,12 +387,9 @@ void explode(float time, int explodingP){
 		//for the last particle use the exploding particle itself
 		particles[explodingP].width/=4;
 
-		particles[explodingP].v_x = speed*(-particles[explodingP].v_x 
-		                          + particles[explodingP].v_x * ((rand() / (float)RAND_MAX)));
-		particles[explodingP].v_y = speed*(-particles[explodingP].v_y 
-		                          + particles[explodingP].v_y * ((rand() / (float)RAND_MAX))); 
-		particles[explodingP].v_z = speed*(-particles[explodingP].v_z 
-		                          + particles[explodingP].v_z * ((rand() / (float)RAND_MAX)));
+		particles[explodingP].v_x = speed *((rand() / (float)RAND_MAX));
+		particles[explodingP].v_y = speed *((rand() / (float)RAND_MAX));
+		particles[explodingP].v_z = speed *((rand() / (float)RAND_MAX));
 
 		particles[explodingP].x += particles[explodingP].v_x*time;
 		particles[explodingP].y += particles[explodingP].v_y*time;
@@ -409,8 +406,8 @@ void timer(int value){
 	int thisTime;
 	float time;
 	thisTime = glutGet(GLUT_ELAPSED_TIME);
-	//time = (thisTime - lastTime) / 500.0; //org line
-	time = (thisTime - lastTime) / 5000.0; //time slowed
+	time = (thisTime - lastTime) / 500.0; //org line
+	//time = (thisTime - lastTime) / 5000.0; //time slowed
 	lastTime = thisTime;
 
 	//rotate windmill
