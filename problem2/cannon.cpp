@@ -73,7 +73,8 @@ void fireCannon()
 {
 	unsigned int i;
 	for (i = 0; i < MAXPARTICLES; i = i + 1){
-		particles[i].width = 2* ((rand() / (float)RAND_MAX) + 1.0)*0.5;
+		//particles[i].width = 2* ((rand() / (float)RAND_MAX) + 1.0)*0.5; //TODO re-enable
+		particles[i].width = 2;
 		particles[i].x = 0.0;
 		particles[i].y = 0.0;
 		particles[i].z = 0.0;
