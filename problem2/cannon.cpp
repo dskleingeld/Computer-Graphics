@@ -29,6 +29,7 @@
 #include <math.h>
 #include <time.h>
 #include <cstdio>
+#include <cstring>
 
 #include "lighting.h"
 
@@ -55,7 +56,7 @@ struct pinfo{
 	float a_x, a_y, a_z;
 	GLfloat ambient[4];
 	GLfloat diffuse[4];
-	bool intact = true;
+	bool intact = false;
 	void setParticleColor(float r, float g , float b){
 		ambient[0] = r;
 		ambient[1] = g;
@@ -68,11 +69,12 @@ struct pinfo{
 		diffuse[3] = 1;
 	}
 } particles[MAXPARTICLES];
+int drawnParticles = 0;
 
 void fireCannon()
 {
 	unsigned int i;
-	for (i = 0; i < MAXPARTICLES; i = i + 1){
+	for (i = 0; i < MAXPARTICLES/10; i = i + 1){
 		//particles[i].width = 2* ((rand() / (float)RAND_MAX) + 1.0)*0.5; //TODO re-enable
 		particles[i].width = 2;
 		particles[i].x = 0.0;
@@ -90,6 +92,7 @@ void fireCannon()
 		particles[i].a_y = 0;
 		particles[i].a_z = 0;
 		particles[i].intact = true;
+		drawnParticles++;
 	}
 	glutGet(GLUT_ELAPSED_TIME);
 	fired = true;
@@ -115,6 +118,7 @@ void fireworks()
 		particles[i].a_x = 0;
 		particles[i].a_y = 0;
 		particles[i].a_z = 0;
+		drawnParticles++;
 	}
 	glutGet(GLUT_ELAPSED_TIME);
 }
@@ -146,12 +150,12 @@ void drawParticles()
 
 	unsigned int i;
 	for (i = 0; i < MAXPARTICLES; i = i + 1){
-		//if(particles[i].intact){	//TODO re-enable
+		if(particles[i].intact){	//TODO re-enable
 			glPushMatrix();
 			glTranslatef(particles[i].x, particles[i].y, particles[i].z);
 			drawOneParticle(i);
 			glPopMatrix();
-		//}
+		}
 	}
 
 	//restore default colors
@@ -352,6 +356,54 @@ void gravity(float time, int currentP){
 	particles[currentP].z += particles[currentP].v_z*time;
 }
 
+void explode(float time, int explodingP){
+	constexpr float speed = 5;
+
+	if(drawnParticles+4 < MAXPARTICLES){
+		drawnParticles+=4;
+		for(int i = 0; i < 4; i++){
+			particles[i].width = particles[explodingP].width/4;
+
+			particles[i].v_x = speed*(-particles[explodingP].v_x 
+			                   + particles[explodingP].v_x * ((rand() / (float)RAND_MAX)));
+			particles[i].v_y = speed*(-particles[explodingP].v_y 
+			                   + particles[explodingP].v_y * ((rand() / (float)RAND_MAX))); 
+			particles[i].v_z = speed*(-particles[explodingP].v_z 
+			                   + particles[explodingP].v_z * ((rand() / (float)RAND_MAX)));
+
+			particles[i].x = particles[explodingP].x + particles[i].v_x*time;
+			particles[i].y = particles[explodingP].y + particles[i].v_y*time;
+			particles[i].z = particles[explodingP].z + particles[i].v_z*time;
+
+			//make them same color as org particle
+			memcpy(particles[i].ambient, particles[explodingP].ambient, 4*sizeof(GLfloat));
+			memcpy(particles[i].diffuse, particles[explodingP].diffuse, 4*sizeof(GLfloat));
+
+			particles[i].a_x = 0;
+			particles[i].a_y = 0;
+			particles[i].a_z = 0;
+			particles[i].intact = true;
+		}
+		//for the last particle use the exploding particle itself
+		particles[explodingP].width/=4;
+
+		particles[explodingP].v_x = speed*(-particles[explodingP].v_x 
+		                          + particles[explodingP].v_x * ((rand() / (float)RAND_MAX)));
+		particles[explodingP].v_y = speed*(-particles[explodingP].v_y 
+		                          + particles[explodingP].v_y * ((rand() / (float)RAND_MAX))); 
+		particles[explodingP].v_z = speed*(-particles[explodingP].v_z 
+		                          + particles[explodingP].v_z * ((rand() / (float)RAND_MAX)));
+
+		particles[explodingP].x += particles[explodingP].v_x*time;
+		particles[explodingP].y += particles[explodingP].v_y*time;
+		particles[explodingP].z += particles[explodingP].v_z*time;
+
+		particles[explodingP].a_x = 0;
+		particles[explodingP].a_y = 0;
+		particles[explodingP].a_z = 0;
+	}
+}
+
 void timer(int value){
 	static int lastTime;
 	int thisTime;
@@ -373,7 +425,7 @@ void timer(int value){
 				gravity(time, i);
 				if(colliding_checkUsingRotation(particles[i].x, particles[i].y, 
 				   particles[i].z, particles[i].width, angle) )
-					particles[i].intact = false;
+					explode(time,i);
 			}
 		}
 	}
@@ -393,7 +445,7 @@ void timer(int value){
 
 				if(colliding_checkUsingRotation(particles[i].x, particles[i].y, 
 			  particles[i].z, particles[i].width, angle) ){
-					particles[i].intact = false;
+					explode(time,i);
 					//printf("colliding\n");
 				}
 			}

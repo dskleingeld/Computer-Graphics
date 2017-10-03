@@ -354,7 +354,7 @@ bool colliding_checkUsingRotation(float x, float y, float z, float r, float angl
 	constexpr float xmax2 = ymax1,
 	                xmin2 = ymin1,
                   ymax2 = xmax1,
-	                ymin2 = ymin1;
+	                ymin2 = xmin1;
 
 /*	//check if in base (easy)*/
 /*	if(inWindmillBase(x, y, z, r)){*/
@@ -363,8 +363,8 @@ bool colliding_checkUsingRotation(float x, float y, float z, float r, float angl
 /*	}*/
 /*	else*/
 		//check if in right z layer for windmill blades
-		//if(z+r > zmin && z-r < zmax){//TODO re-enable z testing
-		if(true){
+		if(z+r > zmin && z-r < zmax){//TODO re-enable z testing
+		//if(true){
 			//printf("zmin: %f, zmax: %f\n", zmin, zmax);
 			//transpose to center of blades at origin
 			x -= (mill_xOffset);//+mill_baseWith/2);
